@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "LexProcedura",
+  "version": "1.0.0",
+  "identifier": "fr.avocat.lexprocedura",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "LexProcedura - Maîtrise Procédurale & Délais CPC",
+        "width": 1280,
+        "height": 850,
+        "minWidth": 960,
+        "minHeight": 650,
+        "resizable": true
+      }
+    ]
+  }
+}

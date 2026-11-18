@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LexProcedura - Copilote de Procédure Civile & API PISTE</title>
+    <!-- Police Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#f8fafc', 600: '#0284c7', 700: '#0369a1', 900: '#0f172a' }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons (CDN) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .writing-vertical { writing-mode: vertical-rl; transform: rotate(180deg); }
+    </style>
+</head>
+<body class="h-full flex font-sans antialiased text-slate-800 select-none overflow-hidden bg-slate-50 relative">
+
+    <!-- SIDEBAR GAUCHE (w-60) -->
+    <aside class="w-60 bg-slate-950 text-slate-300 flex flex-col shrink-0 border-r border-slate-800/80 z-20">
+        <div class="p-4 border-b border-slate-800/80 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg bg-sky-600 flex items-center justify-center text-white shadow-xs">
+                    <i data-lucide="scale" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-xs tracking-tight text-white leading-none">LexProcedura</h1>
+                    <span class="text-[9px] text-sky-400 font-semibold uppercase tracking-wider">Copilote Contentieux</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Raccourci Recherche Ctrl + F -->
+        <div class="p-2.5">
+            <button id="btn-quick-search-trigger" class="w-full flex items-center justify-between px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg border border-slate-800/80 text-xs transition">
+                <span class="flex items-center gap-2">
+                    <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                    <span>Rechercher...</span>
+                </span>
+                <kbd class="bg-slate-800 text-slate-300 px-1 py-0.5 rounded text-[10px] font-mono border border-slate-700">Ctrl F</kbd>
+            </button>
+        </div>
+
+        <!-- Navigation principale -->
+        <nav class="flex-1 px-2.5 space-y-0.5 overflow-y-auto text-xs font-semibold">
+            <button class="nav-item active w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition" data-view="view-dashboard">
+                <i data-lucide="layout-grid" class="w-4 h-4 text-sky-400"></i>
+                <span>Affaires & Délais</span>
+            </button>
+            <button class="nav-item w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition" data-view="view-cpc-express">
+                <i data-lucide="calculator" class="w-4 h-4 text-amber-400"></i>
+                <span>Calculateur CPC & Rétro</span>
+            </button>
+            <button class="nav-item w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition" data-view="view-prescription">
+                <i data-lucide="hourglass" class="w-4 h-4 text-purple-400"></i>
+                <span>Prescription Civile</span>
+            </button>
+            <button class="nav-item w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition" data-view="view-incidents">
+                <i data-lucide="shield-check" class="w-4 h-4 text-rose-400"></i>
+                <span>Stratégie Défense & Nullités</span>
+            </button>
+            <button class="nav-item w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition" data-view="view-competence">
+                <i data-lucide="compass" class="w-4 h-4 text-emerald-400"></i>
+                <span>Compétence Juridictionnelle</span>
+            </button>
+        </nav>
+
+        <div class="p-2.5 border-t border-slate-800/80">
+            <button class="nav-item w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition" data-view="view-params">
+                <i data-lucide="settings" class="w-4 h-4"></i>
+                <span>Paramètres & API PISTE</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- ZONE PRINCIPALE -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-slate-50 relative">
+
+        <!-- =============================================================== -->
+        <!-- 1. VUE DASHBOARD : MAÎTRE / DÉTAIL (60% / 40%)                  -->
+        <!-- =============================================================== -->
+        <div id="view-dashboard" class="content-view active flex-1 flex flex-col overflow-hidden">
+            <!-- 3 CARTES KPI -->
+            <div class="p-4 pb-2 shrink-0">
+                <div class="flex items-center justify-between mb-2">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 tracking-tight">Cockpit des Échéances</h2>
+                        <p class="text-[11px] text-slate-500">Supervision des forclusions et chaînes de délais d'ordre public.</p>
+                    </div>
+                    <button id="btn-open-modal-new-case" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs rounded-lg shadow-xs transition">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>Nouvelle Affaire</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div id="kpi-card-urgent" class="cursor-pointer bg-white p-3 rounded-xl border border-slate-200/90 hover:border-rose-300 shadow-xs transition flex items-center justify-between group">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-rose-600 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span> Échéances Critiques
+                            </span>
+                            <div class="mt-1 flex items-baseline gap-2">
+                                <span id="kpi-critique-count" class="text-xl font-bold text-slate-900">0</span>
+                                <span class="text-[11px] text-rose-700 font-medium">≤ 3 jours</span>
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600"><i data-lucide="alert-octagon" class="w-4 h-4"></i></div>
+                    </div>
+
+                    <div id="kpi-card-week" class="cursor-pointer bg-white p-3 rounded-xl border border-slate-200/90 hover:border-amber-300 shadow-xs transition flex items-center justify-between group">
+                        <div class="flex-1 pr-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-700">Actes de la Semaine</span>
+                            <div class="mt-1 flex items-baseline gap-2">
+                                <span id="kpi-week-count" class="text-xl font-bold text-slate-900">0</span>
+                                <span class="text-[11px] text-amber-700 font-medium">≤ 7 jours</span>
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 shrink-0"><i data-lucide="clock" class="w-4 h-4"></i></div>
+                    </div>
+
+                    <div id="kpi-card-active" class="cursor-pointer bg-white p-3 rounded-xl border border-slate-200/90 hover:border-sky-300 shadow-xs transition flex items-center justify-between group">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Dossiers & Enjeux</span>
+                            <div class="mt-1 flex items-baseline gap-2">
+                                <span id="kpi-active-count" class="text-xl font-bold text-slate-900">0</span>
+                                <span id="kpi-total-financial" class="text-[11px] font-semibold text-slate-600">0 €</span>
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600"><i data-lucide="briefcase" class="w-4 h-4"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VUE MAÎTRE / DÉTAIL (60% GAUCHE / 40% DROITE) -->
+            <div class="flex-1 flex overflow-hidden px-4 pb-4 gap-3">
+                <!-- COLONNE GAUCHE (60%) : LISTE DES AFFAIRES -->
+                <div class="w-[60%] flex flex-col bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
+                    <div class="p-2.5 border-b border-slate-200 bg-slate-50/60 flex items-center justify-between gap-2.5">
+                        <div class="relative flex-1">
+                            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input id="filter-search-input" type="text" placeholder="Filtrer par partie, n° RG, juridiction..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-white rounded-md border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500">
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button class="filter-pill active px-2.5 py-1 text-xs font-semibold rounded-md transition" data-filter="ALL">Tous (<span id="pill-cnt-all">0</span>)</button>
+                            <button class="filter-pill text-rose-700 hover:bg-rose-50 px-2 py-1 text-xs font-semibold rounded-md transition" data-filter="URGENT">Urgents (<span id="pill-cnt-urg">0</span>)</button>
+                            <button class="filter-pill text-amber-700 hover:bg-amber-50 px-2 py-1 text-xs font-semibold rounded-md transition" data-filter="WEEK">Semaine (<span id="pill-cnt-week">0</span>)</button>
+                        </div>
+                    </div>
+                    <div id="cases-cards-container" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+                </div>
+
+                <!-- COLONNE DROITE (40%) : FICHE DÉTAILLÉE DU DOSSIER -->
+                <div class="w-[40%] flex flex-col bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
+                    <div class="p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="folder" class="w-4 h-4 text-sky-600"></i>
+                            <h3 class="font-bold text-xs text-slate-900">Dossier Sélectionné</h3>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button id="btn-delete-active-case" title="Supprimer ce dossier" class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-slate-100 transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto p-3.5 space-y-3.5 text-xs">
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
+                            <h4 id="cp-dossier-titre" class="font-bold text-xs text-slate-900 leading-snug">Sélectionnez une affaire</h4>
+                            <div id="cp-dossier-meta" class="text-slate-500 mt-1 flex flex-wrap gap-x-2.5 gap-y-1 text-[11px]"></div>
+                        </div>
+
+                        <!-- Diligences obligatoires -->
+                        <div class="bg-white p-3 rounded-lg border border-slate-200">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <h5 class="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
+                                    <i data-lucide="check-square" class="w-3.5 h-3.5 text-sky-600"></i>
+                                    Diligences du Dossier
+                                </h5>
+                                <span id="cp-checklist-percent" class="text-[10px] font-extrabold text-sky-700 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-1.5 mb-2.5 overflow-hidden">
+                                <div id="cp-checklist-progressbar" class="bg-sky-600 h-1.5 rounded-full transition-all duration-300" style="width: 0%;"></div>
+                            </div>
+                            <div id="cp-checklist-items" class="space-y-1.5"></div>
+                        </div>
+
+                        <!-- Bouton Ajouter Échéance / Acte -->
+                        <button id="btn-open-modal-add-act" class="w-full py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-semibold text-xs transition shadow-xs flex items-center justify-center gap-1.5">
+                            <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+                            <span>+ Ajouter une Échéance / un Acte</span>
+                        </button>
+
+                        <!-- Sanction & Règle légale (avec article cliquable) -->
+                        <div class="bg-rose-50/70 p-3 rounded-lg border border-rose-200 text-rose-950 space-y-1">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-1.5 text-rose-700 font-bold text-xs">
+                                    <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                                    <span>Sanction de Procédure Encourue</span>
+                                </div>
+                                <span id="cp-article-trigger-badge"></span>
+                            </div>
+                            <p id="cp-vigilance-sanction" class="font-bold text-[11px] text-rose-900 leading-tight"></p>
+                            <div id="cp-vigilance-texte" class="text-[10px] text-slate-700 bg-white/95 p-2 rounded border border-rose-200 leading-relaxed font-mono"></div>
+                        </div>
+
+                        <!-- Frise Chronologique -->
+                        <div class="bg-white p-3 rounded-lg border border-slate-200">
+                            <h5 class="font-bold text-slate-900 mb-2 flex items-center gap-1.5 text-xs">
+                                <i data-lucide="git-commit-vertical" class="w-3.5 h-3.5 text-slate-500"></i>
+                                Frise Chronologique des Actes
+                            </h5>
+                            <div id="cp-timeline-items" class="space-y-2 relative pl-3 border-l-2 border-slate-200 ml-1.5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- 2. CALCULATEUR EXPRESS CPC : DIRECT + RÉTRO-PLANNING            -->
+        <!-- =============================================================== -->
+        <div id="view-cpc-express" class="content-view hidden flex-1 p-5 overflow-y-auto">
+            <div class="max-w-3xl mx-auto bg-white p-5 rounded-xl border border-slate-200/90 shadow-xs space-y-4 text-xs">
+                
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <i data-lucide="calculator" class="w-4 h-4 text-amber-500"></i>
+                            Calculateur Express CPC (Articles 640 à 644)
+                        </h2>
+                        <p class="text-[11px] text-slate-500">Moteur calendaire avec report automatique des jours fériés légaux et export agenda.</p>
+                    </div>
+                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                        <button id="btn-mode-cpc-direct" class="px-3 py-1 rounded-md font-bold text-xs bg-white text-sky-700 shadow-xs transition">Délai à courir (Classique)</button>
+                        <button id="btn-mode-cpc-retro" class="px-3 py-1 rounded-md font-semibold text-xs text-slate-600 hover:text-slate-900 transition">Calcul à rebours (Audience)</button>
+                    </div>
+                </div>
+
+                <!-- SECTION MODE DIRECT -->
+                <div id="section-cpc-direct" class="space-y-3">
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block font-semibold mb-1">Date de notification (Dies a quo) :</label>
+                            <input id="exp-date-input" type="date" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                        </div>
+                        <div>
+                            <label class="block font-semibold mb-1">Type de délai légal :</label>
+                            <select id="exp-delai-select" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium">
+                                <option value="APPEL_1M">Appel contentieux (1 mois - Art. 538 CPC)</option>
+                                <option value="APPEL_15J">Appel gracieux (15 jours - Art. 538 CPC)</option>
+                                <option value="OPPOSITION_1M">Opposition (1 mois - Art. 574 CPC)</option>
+                                <option value="POURVOI_2M">Pourvoi cassation (2 mois - Art. 612 CPC)</option>
+                                <option value="CONST_15J">Constitution avocat (15 jours - Art. 763 CPC)</option>
+                                <option value="CONCL_908">Conclusions appelant (3 mois - Art. 908 CPC)</option>
+                                <option value="CONCL_909">Conclusions intimé (3 mois - Art. 909 CPC)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-semibold mb-1">Délai de distance (Art. 643 CPC) :</label>
+                            <select id="exp-distance-select" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                                <option value="METROPOLE">Métropole (+0 mois)</option>
+                                <option value="DOM_TOM">Outre-Mer (+1 mois)</option>
+                                <option value="ETRANGER">Étranger (+2 mois)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <label class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer">
+                            <input id="chk-exp-alsace" type="checkbox" class="w-3.5 h-3.5 text-sky-600 rounded">
+                            <span>Régime Alsace-Moselle (Vendredi Saint & 26 décembre)</span>
+                        </label>
+                        <button id="btn-run-express-calc" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs transition shadow-xs">Calculer l'Échéance Exacte</button>
+                    </div>
+
+                    <div id="express-result-card" class="p-3 bg-sky-50 border border-sky-200 rounded-lg text-xs leading-relaxed hidden space-y-2">
+                        <div id="express-result-text"></div>
+                        <div class="flex items-center gap-2 pt-1 border-t border-sky-100">
+                            <button id="btn-export-cpc-ics" class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded font-semibold text-xs transition flex items-center gap-1 shadow-xs">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-sky-600"></i> + Agenda (.ics)
+                            </button>
+                            <button id="btn-export-cpc-word" class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded font-semibold text-xs transition flex items-center gap-1 shadow-xs">
+                                <i data-lucide="file-down" class="w-3.5 h-3.5 text-blue-600"></i> Exporter (.doc)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION MODE RÉTRO-PLANNING -->
+                <div id="section-cpc-retro" class="space-y-3 hidden">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold mb-1">Date d'Audience de Plaidoirie ou de Clôture :</label>
+                            <input id="retro-date-audience" type="date" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                        </div>
+                        <div>
+                            <label class="block font-semibold mb-1">Type d'instance / Calendrier :</label>
+                            <select id="retro-type-instance" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium">
+                                <option value="TJ_ORDINAIRE">Tribunal Judiciaire (Clôture & Conclusions récapitulatives)</option>
+                                <option value="COUR_APPEL">Cour d'Appel (Ordonnance de clôture CME)</option>
+                                <option value="REFERE">Procédure de Référé (Échange contradictoire des pièces)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="btn-run-retro-calc" class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs transition shadow-xs">
+                        Générer le Rétro-Planning d'Audience
+                    </button>
+
+                    <div id="retro-result-card" class="p-3.5 bg-amber-50/70 border border-amber-200 rounded-lg text-xs leading-relaxed hidden space-y-3">
+                        <h4 class="font-bold text-amber-950 flex items-center gap-1.5">
+                            <i data-lucide="calendar-range" class="w-4 h-4 text-amber-600"></i>
+                            Rétro-planning Calculé (Prorogations Art. 642 CPC incluses)
+                        </h4>
+                        <div id="retro-steps-container" class="space-y-2"></div>
+                        <div class="flex items-center gap-2 pt-2 border-t border-amber-200">
+                            <button id="btn-export-retro-ics" class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded font-semibold text-xs transition flex items-center gap-1 shadow-xs">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-600"></i> Tout exporter en Agenda (.ics)
+                            </button>
+                            <button id="btn-export-retro-word" class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded font-semibold text-xs transition flex items-center gap-1 shadow-xs">
+                                <i data-lucide="file-down" class="w-3.5 h-3.5 text-blue-600"></i> Exporter le planning (.doc)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- 3. SIMULATEUR DE PRESCRIPTION & FORCLUSION                      -->
+        <!-- =============================================================== -->
+        <div id="view-prescription" class="content-view hidden flex-1 p-5 overflow-y-auto">
+            <div class="max-w-4xl mx-auto space-y-3.5 text-xs">
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <i data-lucide="hourglass" class="w-4 h-4 text-purple-600"></i>
+                            Simulateur de Prescription & Forclusion
+                        </h2>
+                        <p class="text-[11px] text-slate-500">Calcul strict des délais, interruptions (2241), suspensions (2239) et plancher de 6 mois.</p>
+                    </div>
+                    <button id="btn-load-complex-scenario" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold transition">
+                        Charger le Cas d'École (Construction 2018 → Rapport 2024)
+                    </button>
+                </div>
+
+                <!-- Paramètres initiaux (Point de départ T0) -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs space-y-3">
+                    <div class="grid grid-cols-4 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Matière :</label>
+                            <select id="sim-regime" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium">
+                                <option value="5_DROIT_COMMUN">Droit commun 5 ans (Art. 2224 C. civ.)</option>
+                                <option value="10_CORPOREL">Dommage corporel 10 ans (Art. 2226 C. civ.)</option>
+                                <option value="2_VICES_CACHES">Vices cachés 2 ans (Art. 1648 C. civ.)</option>
+                                <option value="2_CONSO">Consommation 2 ans (Art. L. 218-2 C. conso)</option>
+                                <option value="3_SALAIRE">Salaires 3 ans (Art. L. 3245-1 C. trav.)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Qualification :</label>
+                            <select id="sim-qualification" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                                <option value="PRESCRIPTION">Prescription (Susceptible de suspension)</option>
+                                <option value="FORCLUSION">Forclusion (Pas de suspension légale)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Point de départ (T0) :</label>
+                            <input id="sim-date-depart" type="date" value="2018-05-15" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Date cible à vérifier :</label>
+                            <input id="sim-date-cible" type="date" value="2026-11-18" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Événements avec 3 dates pour référé-expertise -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Événements Intermédiaires Survenus</span>
+                        <div class="flex items-center gap-2">
+                            <select id="select-event-to-add" class="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                                <option value="REFERE_EXPERTISE">Référé-expertise (3 dates clés - Art. 2239)</option>
+                                <option value="DEMANDE_JUSTICE">Assignation au fond (Art. 2241)</option>
+                                <option value="MEDIATION">Médiation / Conciliation (Art. 2238)</option>
+                            </select>
+                            <button id="btn-add-event" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-semibold">+ Ajouter</button>
+                        </div>
+                    </div>
+                    <div id="events-timeline-list" class="space-y-2"></div>
+                </div>
+
+                <!-- Résultat, Frise CSS & Syllogisme -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Diagnostic & Forclusion</span>
+                        <span id="verdict-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase"></span>
+                    </div>
+
+                    <!-- BARRE HORIZONTALE DE TIMELINE (CSS PUR) -->
+                    <div class="space-y-1.5 pt-1">
+                        <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                            <span id="timeline-lbl-start">Départ T0 : 15/05/2018</span>
+                            <span id="timeline-lbl-susp" class="text-amber-700 font-semibold">Période suspendue</span>
+                            <span id="timeline-lbl-end" class="font-bold text-slate-800">Échéance finale</span>
+                        </div>
+                        <div class="w-full h-3 bg-slate-100 rounded-full flex overflow-hidden border border-slate-200">
+                            <div id="bar-initial" class="bg-sky-500 h-full" style="width: 25%;" title="Délai initial"></div>
+                            <div id="bar-suspended" class="bg-amber-400 h-full" style="width: 45%;" title="Suspension expertise (Art. 2239)"></div>
+                            <div id="bar-remaining" class="bg-emerald-500 h-full" style="width: 30%;" title="Solde résiduel"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 pt-2 border-t border-slate-100 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-semibold text-slate-800 text-xs">Syllogisme juridique prêt à copier :</span>
+                            <div class="flex items-center gap-2">
+                                <button id="btn-save-presc-to-case" class="text-xs px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded font-semibold flex items-center gap-1 transition">
+                                    <i data-lucide="link" class="w-3.5 h-3.5"></i> Rattacher à un dossier
+                                </button>
+                                <button id="btn-export-presc-ics" class="text-xs px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded font-semibold flex items-center gap-1 transition shadow-xs">
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-purple-600"></i> + Agenda (.ics)
+                                </button>
+                                <button id="btn-export-presc-word" class="text-xs px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded font-semibold flex items-center gap-1 transition shadow-xs">
+                                    <i data-lucide="file-down" class="w-3.5 h-3.5 text-blue-600"></i> Exporter (.doc)
+                                </button>
+                                <button id="btn-copy-syllogisme" class="text-xs px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 rounded font-semibold flex items-center gap-1 transition">
+                                    <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copier
+                                </button>
+                            </div>
+                        </div>
+                        <div id="syllogisme-output" class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-700 font-serif leading-relaxed whitespace-pre-line select-text text-xs"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- 4. STRATÉGIE DE DÉFENSE & NULLITÉS (SANS SCHÉMA)                -->
+        <!-- =============================================================== -->
+        <div id="view-incidents" class="content-view hidden flex-1 p-5 overflow-y-auto">
+            <div class="max-w-4xl mx-auto space-y-3.5 text-xs">
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-rose-600"></i>
+                            Stratégie de Défense & Ordonnancement du Dispositif (Art. 74 CPC)
+                        </h2>
+                        <p class="text-[11px] text-slate-500">Cochez les irrégularités. Le moteur génère directement le dispositif ordonnancé prêt pour le RPVA.</p>
+                    </div>
+                    <button id="btn-export-dispositif-word" class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded font-semibold flex items-center gap-1 transition shadow-xs">
+                        <i data-lucide="file-down" class="w-3.5 h-3.5 text-blue-600"></i> Exporter (.doc)
+                    </button>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs space-y-3">
+                    <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">1. Irrégularités constatées sur l'acte adverse</span>
+                    <div class="grid grid-cols-2 gap-2" id="incident-checkboxes-grid">
+                        <label class="p-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-start gap-2 cursor-pointer">
+                            <input type="checkbox" data-incident="INCOMPETENCE" class="mt-0.5 rounded text-rose-600">
+                            <div>
+                                <span class="font-bold text-slate-800 block">Tribunal incompétent (matériellement ou territorialement)</span>
+                                <span class="text-[11px] text-slate-500">Exception de procédure (<button class="btn-legal-article text-sky-700 font-bold underline" data-code="CPC" data-article="75">Art. 75 CPC</button> - Motiver & désigner).</span>
+                            </div>
+                        </label>
+                        <label class="p-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-start gap-2 cursor-pointer">
+                            <input type="checkbox" data-incident="VICE_FORME" class="mt-0.5 rounded text-rose-600">
+                            <div>
+                                <span class="font-bold text-slate-800 block">Omission d'une mention obligatoire dans l'assignation</span>
+                                <span class="text-[11px] text-slate-500">Nullité pour vice de forme (<button class="btn-legal-article text-sky-700 font-bold underline" data-code="CPC" data-article="114">Art. 114 CPC</button> - Preuve d'un grief).</span>
+                            </div>
+                        </label>
+                        <label class="p-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-start gap-2 cursor-pointer">
+                            <input type="checkbox" data-incident="VICE_FOND" class="mt-0.5 rounded text-rose-600">
+                            <div>
+                                <span class="font-bold text-slate-800 block">Défaut de pouvoir ou de capacité d'ester en justice</span>
+                                <span class="text-[11px] text-slate-500">Nullité de fond (<button class="btn-legal-article text-sky-700 font-bold underline" data-code="CPC" data-article="117">Art. 117 CPC</button> - AUCUN grief requis).</span>
+                            </div>
+                        </label>
+                        <label class="p-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-start gap-2 cursor-pointer">
+                            <input type="checkbox" data-incident="FNR_PRESCRIPTION" class="mt-0.5 rounded text-rose-600">
+                            <div>
+                                <span class="font-bold text-slate-800 block">Action prescrite, forclose ou défaut d'intérêt à agir</span>
+                                <span class="text-[11px] text-slate-500">Fin de non-recevoir (<button class="btn-legal-article text-sky-700 font-bold underline" data-code="CPC" data-article="122">Art. 122 CPC</button> - En tout état de cause).</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="mt-2 p-2.5 bg-amber-50 rounded-lg border border-amber-200 text-xs">
+                        <label class="flex items-center gap-2 font-bold text-amber-950 cursor-pointer">
+                            <input id="chk-timing-conclu-fond" type="checkbox" class="w-4 h-4 text-rose-600 rounded">
+                            <span>Avez-vous DÉJÀ notifié des conclusions comportant des défenses au fond ?</span>
+                        </label>
+                        <p class="text-[11px] text-amber-800 mt-0.5 pl-6">Si oui, les exceptions de procédure (<button class="btn-legal-article text-amber-900 font-bold underline" data-code="CPC" data-article="74">Art. 74 CPC</button>) sont forcloses et irrecevables d'office.</p>
+                    </div>
+                </div>
+
+                <!-- Dispositif prêt à copier -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">2. Dispositif des conclusions généré</span>
+                        <button id="btn-copy-dispositif" class="text-xs text-sky-600 hover:text-sky-800 font-semibold flex items-center gap-1">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copier le dispositif
+                        </button>
+                    </div>
+                    <div id="dispositif-output" class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-slate-800 font-serif leading-relaxed whitespace-pre-line select-text"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- 5. COMPÉTENCE JURIDICTIONNELLE (DIRECTE, SANS SCHÉMA)           -->
+        <!-- =============================================================== -->
+        <div id="view-competence" class="content-view hidden flex-1 p-5 overflow-y-auto">
+            <div class="max-w-3xl mx-auto space-y-3.5 text-xs">
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-xs">
+                    <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="compass" class="w-4 h-4 text-emerald-600"></i>
+                        Compétence Matérielle, Territoriale & Taux du Ressort
+                    </h2>
+                    <p class="text-[11px] text-slate-500">Détermination immédiate selon le COJ et les articles 42 à 46 du CPC.</p>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs grid grid-cols-4 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Matière :</label>
+                        <select id="tree-nat" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium">
+                            <option value="CIVIL_GENERAL">Civil général / Créance</option>
+                            <option value="BAUX_HABITATION">Bail d'habitation (Loi 1989)</option>
+                            <option value="CREDIT_CONSO">Crédit consommation ≤ 75 000 €</option>
+                            <option value="COMMERCE">Litige entre commerçants</option>
+                            <option value="TRAVAIL">Contrat de travail droit privé</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Montant principal (€) :</label>
+                        <input id="tree-montant" type="number" value="12000" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Règle territoriale :</label>
+                        <select id="tree-regle-ter" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                            <option value="DEFENDEUR">Domicile défendeur (Art. 42)</option>
+                            <option value="LIVRAISON">Lieu livraison / prestation (Art. 46)</option>
+                            <option value="DOMMAGE">Lieu fait dommageable (Art. 46)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Ville :</label>
+                        <input id="tree-ville" type="text" value="Nanterre" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                    </div>
+                </div>
+
+                <!-- Résultat net et actionnable -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Résultat d'attribution certifié</span>
+                        <div class="flex items-center gap-2">
+                            <button id="btn-export-competence-word" class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded font-semibold text-xs transition flex items-center gap-1 shadow-xs">
+                                <i data-lucide="file-down" class="w-3.5 h-3.5 text-blue-600"></i> Exporter (.doc)
+                            </button>
+                            <button id="btn-apply-competence-active-case" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition">
+                                Appliquer au dossier actif
+                            </button>
+                        </div>
+                    </div>
+                    <div id="tree-verdict-details" class="p-3 bg-emerald-50/60 rounded-lg border border-emerald-200 text-xs text-emerald-950 leading-relaxed font-mono"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- 6. PARAMÈTRES (AVEC CONNEXION LÉGIFRANCE API PISTE & SAUVEGARDE) -->
+        <!-- =============================================================== -->
+        <div id="view-params" class="content-view hidden flex-1 p-5 overflow-y-auto">
+            <div class="max-w-2xl mx-auto bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs space-y-4 text-xs">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="settings" class="w-4 h-4 text-slate-600"></i>
+                        Paramètres du Cabinet & Connexion API PISTE
+                    </h3>
+                    <p class="text-[11px] text-slate-500">Configurez votre accès officiel Légifrance (API PISTE), Google Gemini et vos sauvegardes.</p>
+                </div>
+
+                <!-- CONNEXION LÉGIFRANCE (API PISTE) -->
+                <div class="bg-sky-50/50 p-3.5 rounded-xl border border-sky-200/80 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
+                            <i data-lucide="landmark" class="w-4 h-4 text-sky-600"></i>
+                            Connexion Légifrance (API PISTE / DILA)
+                        </h4>
+                        <span class="text-[10px] bg-sky-100 text-sky-800 font-bold px-2 py-0.5 rounded">OAuth2 Client Credentials</span>
+                    </div>
+                    <p class="text-[11px] text-slate-600">Permet d'interroger en direct le texte officiel en vigueur des articles du CPC et du Code civil.</p>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Client ID PISTE :</label>
+                            <input id="param-piste-id" type="text" placeholder="Ex: 8a4c3e21-xxxx-xxxx-xxxx-xxxxxxxxxxxx" class="w-full p-2 bg-white border border-slate-300 rounded-lg font-mono text-xs">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Client Secret PISTE :</label>
+                            <input id="param-piste-secret" type="password" placeholder="••••••••••••••••••••••••••••••••••••••••" class="w-full p-2 bg-white border border-slate-300 rounded-lg font-mono text-xs">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Environnement PISTE :</label>
+                        <select id="param-piste-env" class="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs font-medium">
+                            <option value="https://api.piste.gouv.fr">Production (https://api.piste.gouv.fr - Recommandé)</option>
+                            <option value="https://sandbox-api.piste.gouv.fr">Sandbox / Test (https://sandbox-api.piste.gouv.fr)</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-1 flex items-center gap-3">
+                        <button id="btn-test-piste" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded text-xs font-semibold shadow-xs transition flex items-center gap-1.5">
+                            <i data-lucide="key" class="w-3.5 h-3.5 text-sky-200"></i> Tester l'authentification PISTE
+                        </button>
+                        <span id="piste-test-status" class="text-xs font-bold"></span>
+                    </div>
+                </div>
+
+                <!-- API GEMINI -->
+                <div class="bg-indigo-50/40 p-3.5 rounded-xl border border-indigo-200/80 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
+                            <i data-lucide="bot" class="w-4 h-4 text-indigo-600"></i>
+                            Intelligence Artificielle Google Gemini
+                        </h4>
+                        <span class="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded">Palier Gratuit</span>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Clé API Gemini (AI Studio) :</label>
+                        <input id="param-gemini-key" type="password" placeholder="AIzaSy..." class="w-full p-2 bg-white border border-slate-300 rounded-lg font-mono text-xs">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Modèle :</label>
+                            <select id="param-gemini-model" class="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs font-medium">
+                                <option value="gemini-1.5-flash">gemini-1.5-flash (Gratuit, universel, recommandé)</option>
+                                <option value="gemini-3.5-flash">gemini-3.5-flash (Nouvelle génération)</option>
+                                <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview (Raisonnement juridique complexe)</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <label class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer bg-white p-2 rounded-lg border border-slate-200 w-full">
+                                <input id="param-gemini-anonymize" type="checkbox" checked class="w-4 h-4 text-indigo-600 rounded">
+                                <span class="text-[11px]">Anonymiser les parties (Secret pro)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="pt-1 flex items-center gap-3">
+                        <button id="btn-test-gemini" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-semibold shadow-xs transition flex items-center gap-1.5">
+                            <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-300"></i> Tester la connexion Gemini
+                        </button>
+                        <span id="gemini-test-status" class="text-xs font-bold"></span>
+                    </div>
+                </div>
+
+                <!-- SAUVEGARDE & RESTAURATION COMPLETE DU CABINET -->
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
+                    <h4 class="font-bold text-slate-900 flex items-center gap-1.5">
+                        <i data-lucide="database-backup" class="w-4 h-4 text-emerald-600"></i>
+                        Sauvegarde & Restauration de la Base Cabinet (.json)
+                    </h4>
+                    <p class="text-[11px] text-slate-600">Exportez tous vos dossiers pour les sauvegarder ou transférez-les sur un autre poste de travail.</p>
+                    <div class="flex items-center gap-2 pt-1">
+                        <button id="btn-export-backup-json" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i> Exporter la base dossiers (.json)
+                        </button>
+                        <label class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
+                            <i data-lucide="upload" class="w-3.5 h-3.5 text-slate-500"></i> Importer une sauvegarde (.json)
+                            <input id="input-import-backup-json" type="file" accept=".json" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Resend API -->
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
+                    <h4 class="font-bold text-slate-900 flex items-center gap-1.5">
+                        <i data-lucide="mail" class="w-3.5 h-3.5 text-sky-600"></i>
+                        Alertes E-mail Resend
+                    </h4>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Clé API Resend :</label>
+                        <input id="param-resend-key" type="password" placeholder="re_xxxx..." class="w-full p-2 bg-white border border-slate-300 rounded-lg font-mono text-xs">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Destinataires :</label>
+                        <input id="param-resend-emails" type="text" value="englishlawyerM2@gmail.com, Maitrsimonin@gmail.com" class="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs">
+                    </div>
+                </div>
+
+                <div class="pt-1">
+                    <label class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                        <input id="param-chk-alsace" type="checkbox" class="w-4 h-4 text-sky-600 rounded">
+                        <span>Activer le calendrier concordataire Alsace-Moselle (Vendredi Saint et 26 décembre fériés légaux)</span>
+                    </label>
+                </div>
+
+                <button id="btn-save-settings" class="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs transition shadow-xs">
+                    Enregistrer Tous les Réglages
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- =============================================================== -->
+    <!-- 7. DOCK IA GEMINI UNIVERSEL + ANALYSEUR D'ACTE ADVERSE          -->
+    <!-- =============================================================== -->
+    <div id="ai-collapsed-tab" class="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-slate-900 hover:bg-slate-800 text-white rounded-l-xl px-2 py-4 flex flex-col items-center gap-2 cursor-pointer shadow-lg border-l border-t border-b border-slate-700 transition">
+        <i data-lucide="chevrons-left" class="w-4 h-4 text-sky-400"></i>
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+        <span class="writing-vertical text-[10px] font-bold tracking-wider uppercase text-slate-300">Copilote IA</span>
+    </div>
+
+    <aside id="ai-global-dock" class="fixed right-0 top-0 h-full w-[440px] bg-white border-l border-slate-200 shadow-2xl z-50 flex flex-col transform translate-x-full transition-all duration-300">
+        <!-- Header Dock -->
+        <div class="p-3 border-b border-slate-200 bg-slate-950 text-white flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded bg-gradient-to-tr from-indigo-600 to-sky-500 text-white flex items-center justify-center">
+                    <i data-lucide="bot" class="w-3.5 h-3.5"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-sky-200">Copilote Juridique IA</h3>
+                </div>
+            </div>
+            <div class="flex items-center gap-1">
+                <button id="btn-toggle-ai-width" title="Agrandir / Réduire la largeur" class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition">
+                    <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                </button>
+                <button id="btn-clear-chat" title="Effacer la discussion" class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+                <button id="btn-collapse-ai-dock" title="Replier" class="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition">
+                    <i data-lucide="chevrons-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Sous-onglets -->
+        <div class="flex border-b border-slate-200 bg-slate-100 text-xs font-semibold px-2">
+            <button id="btn-subtab-ai-chat" class="flex-1 py-2 text-center border-b-2 border-indigo-600 text-indigo-700 flex items-center justify-center gap-1.5">
+                <i data-lucide="message-square" class="w-3.5 h-3.5"></i> Discussion
+            </button>
+            <button id="btn-subtab-ai-analyze" class="flex-1 py-2 text-center border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5">
+                <i data-lucide="file-search" class="w-3.5 h-3.5 text-amber-600"></i> Analyser un Acte Adverse
+            </button>
+        </div>
+
+        <!-- Contexte actif -->
+        <div class="px-3 py-1.5 bg-indigo-50/80 border-b border-indigo-100 flex items-center justify-between text-[11px]">
+            <span class="flex items-center gap-1.5 text-indigo-950 font-medium truncate">
+                <i data-lucide="folder-check" class="w-3.5 h-3.5 text-indigo-600 shrink-0"></i>
+                <span id="chat-active-context-label" class="font-semibold truncate">Dossier actif</span>
+            </span>
+            <span id="chat-tool-context-label" class="text-[9px] font-mono bg-white px-1.5 py-0.5 rounded text-indigo-700 border border-indigo-200">Affaires</span>
+        </div>
+
+        <!-- SOUS-ONGLET 1 : DISCUSSION -->
+        <div id="ai-subview-chat" class="flex-1 flex flex-col overflow-hidden">
+            <div class="p-2 border-b border-slate-100 bg-white grid grid-cols-3 gap-1 text-[11px]">
+                <button class="btn-quick-prompt text-left p-1.5 rounded-md border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 text-slate-700 font-medium transition truncate" data-prompt="Audite strictement les risques procéduraux : détecte tous les risques d'irrecevabilité, de caducité (Art. 908/909 CPC), de prescription ou de forclusion applicables.">
+                    🛡️ Auditer risques
+                </button>
+                <button class="btn-quick-prompt text-left p-1.5 rounded-md border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 text-slate-700 font-medium transition truncate" data-prompt="Rédige un projet d'e-mail clair, rigoureux et rassurant à destination de notre client pour lui faire un point d'étape sur la procédure en cours, les délais impartis et les prochaines étapes.">
+                    ✉️ Mail client
+                </button>
+                <button class="btn-quick-prompt text-left p-1.5 rounded-md border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 text-slate-700 font-medium transition truncate" data-prompt="Rédige la trame ordonnancée du dispositif de nos conclusions d'avocat, en respectant la règle in limine litis (Art. 74 CPC), les fins de non-recevoir (Art. 122 CPC) et les prétentions au fond.">
+                    ⚖️ Trame conclusions
+                </button>
+            </div>
+
+            <div id="chat-messages-container" class="flex-1 overflow-y-auto p-3 space-y-3 text-xs bg-slate-50/40"></div>
+
+            <div class="p-2.5 bg-white border-t border-slate-200 shrink-0">
+                <form id="chat-input-form" class="flex gap-2">
+                    <textarea id="chat-user-input" rows="2" placeholder="Posez une question procédurale ou demandez un projet d'acte..." class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500 resize-none font-medium text-slate-800"></textarea>
+                    <button type="submit" class="px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center transition shadow-xs">
+                        <i data-lucide="send-horizontal" class="w-4 h-4"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- SOUS-ONGLET 2 : ANALYSER UN ACTE ADVERSE -->
+        <div id="ai-subview-analyze" class="hidden flex-1 flex flex-col overflow-y-auto p-3.5 space-y-3 text-xs">
+            <div>
+                <h4 class="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
+                    <i data-lucide="file-search" class="w-4 h-4 text-amber-600"></i>
+                    Analyseur d'Assignations & Conclusions Adverses
+                </h4>
+                <p class="text-[11px] text-slate-500">Collez le texte de l'acte adverse pour extraire la chronologie, les prétentions et détecter les failles procédurales.</p>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Texte brut de l'acte adverse :</label>
+                <textarea id="adverse-act-raw-text" rows="5" placeholder="Collez ici le texte d'une assignation ou de conclusions..." class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono"></textarea>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button id="btn-extract-adverse-analysis" class="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs transition shadow-xs flex items-center justify-center gap-1.5">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-200"></i> Extraire la Grille d'Analyse
+                </button>
+                <button id="btn-demo-adverse-act" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-300 transition">
+                    Exemple
+                </button>
+            </div>
+
+            <div id="adverse-analysis-results" class="space-y-2.5 hidden pt-1">
+                <div class="p-3 bg-sky-50 border border-sky-200 rounded-lg space-y-1.5">
+                    <div class="flex items-center justify-between font-bold text-sky-900">
+                        <span>1. Chronologie & Dates Clés Détectées</span>
+                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-sky-700"></i>
+                    </div>
+                    <div id="adverse-dates-container" class="space-y-1 text-slate-700 text-[11px]"></div>
+                </div>
+
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1.5">
+                    <div class="flex items-center justify-between font-bold text-slate-900">
+                        <span>2. Prétentions & Demandes Chiffrées</span>
+                        <i data-lucide="euro" class="w-3.5 h-3.5 text-slate-700"></i>
+                    </div>
+                    <div id="adverse-claims-container" class="space-y-1 text-slate-700 text-[11px]"></div>
+                </div>
+
+                <div class="p-3 bg-purple-50 border border-purple-200 rounded-lg space-y-1.5">
+                    <div class="flex items-center justify-between font-bold text-purple-900">
+                        <span>3. Fondements Juridiques Invoqués</span>
+                        <i data-lucide="book-open" class="w-3.5 h-3.5 text-purple-700"></i>
+                    </div>
+                    <div id="adverse-grounds-container" class="space-y-1 text-slate-700 text-[11px]"></div>
+                </div>
+
+                <div class="p-3 bg-rose-50 border border-rose-200 rounded-lg space-y-1.5">
+                    <div class="flex items-center justify-between font-bold text-rose-900">
+                        <span>4. Failles Procédurales & Moyens d'Irrecevabilité</span>
+                        <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-rose-700"></i>
+                    </div>
+                    <div id="adverse-flaws-container" class="space-y-1 text-rose-900 text-[11px] font-medium"></div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- =============================================================== -->
+    <!-- 8. MODALE DE LECTURE OFFICIELLE LÉGIFRANCE (API PISTE)          -->
+    <!-- =============================================================== -->
+    <div id="modal-legifrance" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <!-- Header Modale Légifrance -->
+            <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-sky-600 text-white flex items-center justify-center shadow-xs">
+                        <i data-lucide="landmark" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 id="modal-legi-title" class="font-bold text-sm text-slate-900">Article ...</h3>
+                            <span id="modal-legi-source-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-sky-100 text-sky-800">Légifrance</span>
+                        </div>
+                        <p id="modal-legi-code" class="text-[11px] text-slate-500 font-medium">Code de procédure civile</p>
+                    </div>
+                </div>
+                <button id="btn-close-modal-legifrance" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Corps : Texte officiel en vigueur -->
+            <div class="p-5 overflow-y-auto space-y-3 text-xs leading-relaxed">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-100 text-slate-500 text-[11px]">
+                    <span id="modal-legi-date-vigueur" class="flex items-center gap-1 font-medium">
+                        <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i> Version en vigueur certifiée
+                    </span>
+                    <span id="modal-legi-id" class="font-mono text-slate-400 text-[10px]"></span>
+                </div>
+                
+                <div id="modal-legi-text" class="p-4 bg-slate-50/70 border border-slate-200/80 rounded-xl font-serif text-slate-800 text-[13px] leading-relaxed whitespace-pre-line select-text">
+                    Chargement du texte officiel...
+                </div>
+            </div>
+
+            <!-- Footer Modale avec bouton injection Copilote IA -->
+            <div class="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                <button id="btn-copy-legi-text" class="px-3 py-1.5 border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copier le texte officiel
+                </button>
+                <div class="flex items-center gap-2">
+                    <button id="btn-insert-legi-to-ai" class="px-3.5 py-1.5 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5 transition">
+                        <i data-lucide="bot" class="w-3.5 h-3.5 text-amber-300"></i> Insérer la citation dans le Copilote IA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE NOUVELLE AFFAIRE -->
+    <div id="modal-new-case" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+            <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <h3 class="font-bold text-xs text-slate-900 flex items-center gap-2">
+                    <i data-lucide="folder-plus" class="w-4 h-4 text-sky-600"></i> Nouvelle Affaire
+                </h3>
+                <button id="btn-close-modal-new-case" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div class="p-4 space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Nom du dossier / Parties * :</label>
+                    <input id="modal-case-nom" type="text" placeholder="Ex: SAS ALPHA c/ M. DUPONT" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                </div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Référence cabinet :</label>
+                        <input id="modal-case-ref" type="text" placeholder="Ex: DOS-2026-X1" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">N° de RG :</label>
+                        <input id="modal-case-rg" type="text" placeholder="Ex: RG 26/04419" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Juridiction :</label>
+                        <input id="modal-case-juridiction" type="text" placeholder="Ex: TJ de Nanterre" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Enjeu financier (€) :</label>
+                        <input id="modal-case-enjeu" type="number" value="50000" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                    </div>
+                </div>
+            </div>
+            <div class="px-5 py-3 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
+                <button id="btn-cancel-modal-new-case" class="px-3 py-1.5 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold">Annuler</button>
+                <button id="btn-submit-modal-new-case" class="px-4 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold">Créer le Dossier</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE AJOUTER UN ACTE -->
+    <div id="modal-add-act" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <h3 class="font-bold text-xs text-slate-900 flex items-center gap-2">
+                    <i data-lucide="calendar-plus" class="w-4 h-4 text-sky-600"></i> Ajouter une Échéance / un Acte
+                </h3>
+                <button id="btn-close-modal-add-act" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div class="p-4 space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Nature de l'acte / événement :</label>
+                    <input id="modal-act-nature" type="text" placeholder="Ex: Notification des conclusions d'appelant" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Date de notification (Dies a quo) :</label>
+                    <input id="modal-act-date" type="date" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Délai procédural applicable :</label>
+                    <select id="modal-act-delai" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium">
+                        <option value="APPEL_1M">Appel contentieux (1 mois - Art. 538 CPC)</option>
+                        <option value="CONCL_908">Conclusions d'appelant (3 mois - Art. 908 CPC)</option>
+                        <option value="CONCL_909">Conclusions d'intimé (3 mois - Art. 909 CPC)</option>
+                        <option value="CONST_15J">Constitution d'avocat au TJ (15 jours - Art. 763 CPC)</option>
+                        <option value="POURVOI_2M">Pourvoi en cassation (2 mois - Art. 612 CPC)</option>
+                        <option value="OPPOSITION_1M">Opposition jugement par défaut (1 mois - Art. 574 CPC)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="px-5 py-3 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
+                <button id="btn-cancel-modal-add-act" class="px-3 py-1.5 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold">Annuler</button>
+                <button id="btn-submit-modal-add-act" class="px-4 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold">Enregistrer l'Acte</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PALETTE DE COMMANDE CTRL + F -->
+    <div id="palette-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden items-start justify-center pt-24 p-4">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+            <div class="p-3 border-b border-slate-200 flex items-center gap-2 bg-slate-50">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                <input id="palette-search-input" type="text" placeholder="Rechercher une affaire, un acte, un délai..." class="w-full bg-transparent text-xs outline-none text-slate-800 placeholder-slate-400 font-medium">
+                <kbd class="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded text-slate-600 font-mono">ESC</kbd>
+            </div>
+            <div id="palette-items-list" class="max-h-72 overflow-y-auto p-1.5 space-y-1 text-xs"></div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

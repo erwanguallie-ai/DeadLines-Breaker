@@ -1,0 +1,72 @@
+// Client d'envoi d'e-mails professionnels via l'API Resend
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ResendPayload {
+    pub from: String,
+    pub to: Vec<String>,
+    pub subject: String,
+    pub html: String,
+}
+
+pub async fn envoyer_alerte_resend(
+    api_key: &str,
+    destinataires: Vec<String>,
+    nom_affaire: &str,
+    juridiction: &str,
+    acte: &str,
+    date_limite: &str,
+    jours_restants: i64,
+    fondement: &str,
+) -> Result<String, String> {
+    if api_key.trim().is_empty() || api_key == "re_votre_cle_api_ici" {
+        return Err("Clé API Resend non configurée ou invalide dans les paramètres.".to_string());
+    }
+
+    let client = reqwest::Client::new();
+    let objet = format!("⚠️ URGENT : Délai procédural critique - Dossier {}", nom_affaire);
+
+    let corps_html = format!(
+        r#"<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; color: #1a1a1a; line-height: 1.6;">
+    <div style="border-left: 5px solid #b91c1c; padding-left: 15px; margin-bottom: 20px;">
+        <h2 style="color: #b91c1c; margin: 0 0 5px 0;">ALERTE PROCÉDURALE STRICTE</h2>
+        <p style="margin: 0; font-size: 14px; color: #555;">Cabinet d'Avocats - Notification de délai impératif</p>
+    </div>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <tr><td style="padding: 8px; font-weight: bold; background: #f8f9fa; width: 30%;">Dossier :</td><td style="padding: 8px;">{nom_affaire}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; background: #f8f9fa;">Juridiction :</td><td style="padding: 8px;">{juridiction}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; background: #f8f9fa;">Acte requis :</td><td style="padding: 8px;">{acte}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; background: #f8f9fa;">Date limite :</td><td style="padding: 8px; font-weight: bold; color: #b91c1c;">{date_limite} à 24h00</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; background: #f8f9fa;">Temps restant :</td><td style="padding: 8px; font-weight: bold;">{jours_restants} jour(s)</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; background: #f8f9fa;">Fondement CPC :</td><td style="padding: 8px;">{fondement}</td></tr>
+    </table>
+    <p style="font-size: 12px; color: #777;">Avertissement : Message généré automatiquement par LexProcedura. Vérifiez l'acte et accomplissez les formalités requises sur le RPVA ou auprès du greffe avant la clôture des délais d'ordre public.</p>
+</body>
+</html>"#
+    );
+
+    let payload = ResendPayload {
+        from: "LexProcedura <alertes@resend.dev>".to_string(),
+        to: destinataires,
+        subject: objet,
+        html: corps_html,
+    };
+
+    let reponse = client
+        .post("https://api.resend.com/emails")
+        .bearer_auth(api_key)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|e| format!("Erreur de connexion HTTP à Resend : {}", e))?;
+
+    if reponse.status().is_success() {
+        Ok("Alerte e-mail transmise avec succès.".to_string())
+    } else {
+        let err_txt = reponse.text().await.unwrap_or_default();
+        Err(format!("Échec de l'envoi Resend (API Error) : {}", err_txt))
+    }
+}

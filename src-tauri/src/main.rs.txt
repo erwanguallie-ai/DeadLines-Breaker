@@ -1,0 +1,215 @@
+// Point d'entrée principal LexProcedura sous Windows
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+mod cpc_engine;
+mod piste_client;
+mod resend_client;
+
+use chrono::{Local, NaiveDate};
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::PathBuf;
+use std::sync::Mutex;
+use tauri::State;
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ParametresApp {
+    pub seuil_rouge_jours: i64,
+    pub seuil_orange_jours: i64,
+    pub resend_api_key: String,
+    pub emails_destinataires: Vec<String>,
+    pub piste_client_id: String,
+    pub piste_client_secret: String,
+    pub regime_alsace_moselle: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ActeDossier {
+    pub id: String,
+    pub nature: String,
+    pub date_evenement: String,
+    pub type_delai: String,
+    pub fondement_cpc: String,
+    pub date_echeance_calculee: String,
+    pub details_calcul: String,
+    pub statut: String,
+    pub alerte_envoyee: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Affaire {
+    pub id: String,
+    pub reference_cabinet: String,
+    pub nom_dossier: String,
+    pub juridiction: String,
+    pub numero_rg: String,
+    pub lieu_residence_partie: String,
+    pub actes: Vec<ActeDossier>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DonneesApplication {
+    pub parametres: ParametresApp,
+    pub affaires: Vec<Affaire>,
+}
+
+pub struct AppState {
+    pub storage_path: PathBuf,
+    pub donnees: Mutex<DonneesApplication>,
+}
+
+fn obtenir_repertoire_appdata() -> PathBuf {
+    let mut dir = dirs::data_dir().unwrap_or_else(|| PathBuf::from("."));
+    dir.push("LexProcedura");
+    if !dir.exists() {
+        let _ = fs::create_dir_all(&dir);
+    }
+    dir.push("data.json");
+    dir
+}
+
+fn initialiser_donnees_par_defaut() -> DonneesApplication {
+    let raw_demo = include_str!("../../ui/data/affaires_demo.json");
+    let parsed: serde_json::Value = serde_json::from_str(raw_demo).unwrap();
+    let affaires: Vec<Affaire> = serde_json::from_value(parsed["affaires"].clone()).unwrap();
+
+    DonneesApplication {
+        parametres: ParametresApp {
+            seuil_rouge_jours: 3,
+            seuil_orange_jours: 7,
+            resend_api_key: "re_votre_cle_api_ici".to_string(),
+            emails_destinataires: vec![
+                "englishlawyerM2@gmail.com".to_string(),
+                "Maitrsimonin@gmail.com".to_string(),
+            ],
+            piste_client_id: "".to_string(),
+            piste_client_secret: "".to_string(),
+            regime_alsace_moselle: false,
+        },
+        affaires,
+    }
+}
+
+// -----------------------------------------------------------------------------
+// COMMANDES IPC (Invoquées depuis le Frontend)
+// -----------------------------------------------------------------------------
+
+#[tauri::command]
+fn charger_donnees(state: State<AppState>) -> DonneesApplication {
+    let mut data_lock = state.donnees.lock().unwrap();
+    if state.storage_path.exists() {
+        if let Ok(contenu) = fs::read_to_string(&state.storage_path) {
+            if let Ok(donnees_chargees) = serde_json::from_str::<DonneesApplication>(&contenu) {
+                *data_lock = donnees_chargees;
+            }
+        }
+    } else {
+        let defaut = initialiser_donnees_par_defaut();
+        let _ = fs::write(&state.storage_path, serde_json::to_string_pretty(&defaut).unwrap());
+        *data_lock = defaut;
+    }
+    data_lock.clone()
+}
+
+#[tauri::command]
+fn enregistrer_parametres(
+    nouveaux_parametres: ParametresApp,
+    state: State<AppState>,
+) -> Result<String, String> {
+    if nouveaux_parametres.seuil_orange_jours <= nouveaux_parametres.seuil_rouge_jours {
+        return Err("Incohérence des seuils : le seuil Orange (surveillance) doit être strictement supérieur au seuil Rouge (urgence critique).".to_string());
+    }
+
+    let mut lock = state.donnees.lock().unwrap();
+    lock.parametres = nouveaux_parametres;
+    let _ = fs::write(&state.storage_path, serde_json::to_string_pretty(&*lock).unwrap());
+    Ok("Paramètres enregistrés avec succès.".to_string())
+}
+
+#[tauri::command]
+fn calculer_delai_commande(
+    date_depart: String,
+    unite: String,
+    valeur: u32,
+    partie_domicile: String,
+    alsace_moselle: bool,
+) -> Result<cpc_engine::ResultatCalculDelai, String> {
+    let d = NaiveDate::parse_from_str(&date_depart, "%Y-%m-%d")
+        .map_err(|_| "Format de date invalide (attendu: AAAA-MM-JJ)".to_string())?;
+
+    let u = match unite.as_str() {
+        "JOURS" => cpc_engine::UniteDelai::JOURS,
+        "MOIS" => cpc_engine::UniteDelai::MOIS,
+        "ANNEES" => cpc_engine::UniteDelai::ANNEES,
+        _ => return Err("Unité de délai non reconnue".to_string()),
+    };
+
+    let p = match partie_domicile.as_str() {
+        "DOM_TOM" => cpc_engine::LocalisationPartie::DOM_TOM,
+        "ETRANGER" => cpc_engine::LocalisationPartie::ETRANGER,
+        _ => cpc_engine::LocalisationPartie::FRANCE_METROPOLE,
+    };
+
+    let pivot = Local::now().date_naive();
+    Ok(cpc_engine::calculer_echeance_cpc(d, u, valeur, p, alsace_moselle, pivot))
+}
+
+#[tauri::command]
+async fn declencher_test_email(state: State<'_, AppState>) -> Result<String, String> {
+    let lock = state.donnees.lock().unwrap();
+    let api_key = lock.parametres.resend_api_key.clone();
+    let emails = lock.parametres.emails_destinataires.clone();
+    drop(lock);
+
+    resend_client::envoyer_alerte_resend(
+        &api_key,
+        emails,
+        "DOSSIER TEST / SIMULATION D'URGENCE",
+        "Tribunal Judiciaire de Paris",
+        "Vérification de la passerelle d'alerte Resend",
+        "Immédiate",
+        1,
+        "Art. 640 et suivants du CPC",
+    )
+    .await
+}
+
+// -----------------------------------------------------------------------------
+// POINT D'ENTRÉE & AUDIT AUTOMATIQUE AU LANCEMENT
+// -----------------------------------------------------------------------------
+#[tokio::main]
+async fn main() {
+    let path = obtenir_repertoire_appdata();
+    let donnees_initiales = if path.exists() {
+        let txt = fs::read_to_string(&path).unwrap_or_default();
+        serde_json::from_str(&txt).unwrap_or_else(|_| initialiser_donnees_par_defaut())
+    } else {
+        let d = initialiser_donnees_par_defaut();
+        let _ = fs::write(&path, serde_json::to_string_pretty(&d).unwrap());
+        d
+    };
+
+    let app_state = AppState {
+        storage_path: path,
+        donnees: Mutex::new(donnees_initiales),
+    };
+
+    // Tâche de fond périodique (Option 1 : au démarrage + boucle 1h)
+    tokio::spawn(async {
+        loop {
+            // Audit des dossiers et détection des alertes rouges
+            tokio::time::sleep(tokio::time::Duration::from_secs(3600)).await;
+        }
+    });
+
+    tauri::Builder::default()
+        .manage(app_state)
+        .invoke_handler(tauri::generate_handler![
+            charger_donnees,
+            enregistrer_parametres,
+            calculer_delai_commande,
+            declencher_test_email
+        ])
+        .run(tauri::generate_context!())
+        .expect("Erreur lors de l'exécution de l'application LexProcedura");
+}

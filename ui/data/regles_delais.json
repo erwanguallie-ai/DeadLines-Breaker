@@ -1,0 +1,36 @@
+﻿{
+  "delais": [
+    {
+      "code": "DELAI_APPEL_CONTENTIEUX",
+      "libelle": "Appel en matière contentieuse",
+      "duree_valeur": 1,
+      "duree_unite": "MOIS",
+      "article_cpc": "Art. 538 du CPC",
+      "description": "Le délai d'appel en matière contentieuse est d'un mois à compter de la notification ou signification du jugement."
+    },
+    {
+      "code": "DELAI_APPEL_GRACIEUX",
+      "libelle": "Appel en matière gracieuse",
+      "duree_valeur": 15,
+      "duree_unite": "JOURS",
+      "article_cpc": "Art. 538 du CPC",
+      "description": "Le délai d'appel est de quinze jours en matière gracieuse."
+    },
+    {
+      "code": "DELAI_CONSTITUTION_AVOCAT_TJ",
+      "libelle": "Constitution d'avocat (Tribunal Judiciaire)",
+      "duree_valeur": 15,
+      "duree_unite": "JOURS",
+      "article_cpc": "Art. 763 du CPC",
+      "description": "Le défendeur est tenu de constituer avocat dans le délai de quinze jours à compter de l'assignation."
+    },
+    {
+      "code": "DELAI_CONCLUSIONS_APPELANT_908",
+      "libelle": "Conclusions de l'appelant (procédure avec RPVA)",
+      "duree_valeur": 3,
+      "duree_unite": "MOIS",
+      "article_cpc": "Art. 908 du CPC",
+      "description": "À peine de caducité, l'appelant dispose d'un délai de trois mois pour remettre ses conclusions au greffe."
+    }
+  ]
+}

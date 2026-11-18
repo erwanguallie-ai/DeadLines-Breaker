@@ -1,0 +1,88 @@
+﻿{
+  "affaires": [
+    {
+      "id": "demo-001",
+      "reference_cabinet": "DOS-2026-URG1",
+      "nom_dossier": "SARL BATIPRO c/ Époux DUPONT",
+      "juridiction": "Tribunal Judiciaire de Paris",
+      "numero_rg": "RG 26/01452",
+      "lieu_residence_partie": "FRANCE_METROPOLE",
+      "actes": [
+        {
+          "id": "act-urg-01",
+          "nature": "Signification de jugement au fond",
+          "date_evenement": "2026-10-18",
+          "type_delai": "DELAI_APPEL_CONTENTIEUX",
+          "fondement_cpc": "Art. 538 du CPC",
+          "date_echeance_calculee": "2026-11-18",
+          "details_calcul": "Délai de 1 mois. Dies a quo: 18/10/2026. Échéance au 18/11/2026.",
+          "statut": "EN_COURS",
+          "alerte_envoyee": false
+        }
+      ]
+    },
+    {
+      "id": "demo-002",
+      "reference_cabinet": "DOS-2026-SURV2",
+      "nom_dossier": "SCI L'ORANGERIE c/ M. KHALED",
+      "juridiction": "Cour d'appel de Lyon",
+      "numero_rg": "RG 25/08912",
+      "lieu_residence_partie": "FRANCE_METROPOLE",
+      "actes": [
+        {
+          "id": "act-surv-02",
+          "nature": "Déclaration d'appel enregistrée",
+          "date_evenement": "2026-08-22",
+          "type_delai": "DELAI_CONCLUSIONS_APPELANT_908",
+          "fondement_cpc": "Art. 908 du CPC",
+          "date_echeance_calculee": "2026-11-23",
+          "details_calcul": "Délai de 3 mois. Prorogé au lundi 23/11/2026 (Art. 642 CPC).",
+          "statut": "EN_COURS",
+          "alerte_envoyee": false
+        }
+      ]
+    },
+    {
+      "id": "demo-003",
+      "reference_cabinet": "DOS-2026-NORM3",
+      "nom_dossier": "SA PHARMA-DISTRIB c/ CLINIQUE DU PARC",
+      "juridiction": "Tribunal Judiciaire de Nanterre",
+      "numero_rg": "RG 26/00311",
+      "lieu_residence_partie": "FRANCE_METROPOLE",
+      "actes": [
+        {
+          "id": "act-norm-03",
+          "nature": "Assignation en paiement signifiée",
+          "date_evenement": "2026-11-12",
+          "type_delai": "DELAI_CONSTITUTION_AVOCAT_TJ",
+          "fondement_cpc": "Art. 763 du CPC",
+          "date_echeance_calculee": "2026-11-27",
+          "details_calcul": "Délai de 15 jours. Échéance le 27/11/2026.",
+          "statut": "EN_COURS",
+          "alerte_envoyee": false
+        }
+      ]
+    },
+    {
+      "id": "demo-004",
+      "reference_cabinet": "DOS-2025-EXP4",
+      "nom_dossier": "Consorts MULLER c/ AXA FRANCE",
+      "juridiction": "Cour d'appel de Colmar",
+      "numero_rg": "RG 24/09981",
+      "lieu_residence_partie": "FRANCE_METROPOLE",
+      "actes": [
+        {
+          "id": "act-exp-04",
+          "nature": "Arrêt contradictoire signifié",
+          "date_evenement": "2026-08-10",
+          "type_delai": "DELAI_POURVOI_CASSATION",
+          "fondement_cpc": "Art. 612 du CPC",
+          "date_echeance_calculee": "2026-10-12",
+          "details_calcul": "Délai expiré et forclos.",
+          "statut": "EXPIRE",
+          "alerte_envoyee": true
+        }
+      ]
+    }
+  ]
+}
